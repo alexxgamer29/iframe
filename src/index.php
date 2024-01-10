@@ -335,7 +335,7 @@ while ($itemsFound < $maxItemsToFind && !empty($urlsArray)) {
                             <div id="product-item__wrapper">
                                 <div class="product-item">
                                     <div class="product-info__container">
-                                        <a href="" class="product-link">
+                                        <a href="<?php echo htmlspecialchars($item['url']); ?>" class="product-link">
                                             <div class="product-info__wrapper">
                                                 <div class="product-info">
                                                     <div class="product-img__container">
