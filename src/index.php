@@ -1,82 +1,15 @@
 <?php
-// Include the Simple HTML DOM Parser library
-include('../lib/simple_html_dom.php');
-
-function getBaseUrlFromShortenedUrl($url)
-{
-    $headers = get_headers($url, 1);
-
-    if (isset($headers['Location'])) {
-        $finalUrl = is_array($headers['Location']) ? end($headers['Location']) : $headers['Location'];
-
-        return parse_url($finalUrl, PHP_URL_HOST);
-    }
-
-    return parse_url($url, PHP_URL_HOST);
+// Set the path to your JSON file
+$jsonFilePath = '../data/data.json';
+// Read JSON file
+$jsonData = file_get_contents($jsonFilePath);
+// Decode JSON data to array
+$dataArray = json_decode($jsonData, true);
+// Check if decoding was successful
+if ($dataArray === null) {
+    die("Error decoding JSON data");
 }
-
-// Read URLs from the JSON file
-$urlsJson = file_get_contents('../urls.json');
-$urlsArray = json_decode($urlsJson, true);
-
-// Initialize variables for counting items with title, price, and discount
-$itemsFound = 0;
-$maxItemsToFind = 6;
-$crawlData = [];
-
-// Loop until the desired number of items are found
-while ($itemsFound < $maxItemsToFind && !empty($urlsArray)) {
-    // Randomly select a URL
-    $index = array_rand($urlsArray, 1);
-    $url = $urlsArray[$index]['url'];
-
-    $base_url = getBaseUrlFromShortenedUrl($url);
-
-    // Get HTML content from the URL using file_get_contents
-    $html = file_get_contents($url);
-
-    // Create a Simple HTML DOM object
-    $dom = new simple_html_dom();
-    $dom->load($html);
-
-    // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
-    $title = $dom->find('._5uSO3a', 0);
-    $price = $dom->find('.TVzooJ.typo-m18', 0);
-    $img = $dom->find('meta[property=og:image"]', 0);
-    $discount = $dom->find('.badge__promotion', 0);
-
-    // Check if title and price are present and discount is either a string or empty
-    if ($title && $price && !empty($title->innertext) && !empty($price->innertext) && ($discount || $discount === "")) {
-        // Check if discount is present
-        $discount_filter = '';
-        if ($discount) {
-            preg_match('/(\d+)%/', $discount->innertext, $matches);
-
-            // Check if a match is found
-            if (!empty($matches)) {
-                $discount_filter = $matches[1];
-            }
-        }
-
-        // Store crawl data in the array
-        $crawlData[] = [
-            'url' => $url,
-            'base_url' => $base_url,
-            'title' => $title->innertext,
-            'price' => $price->innertext,
-            'discount' => $discount_filter,
-            'img' => $img->content,
-        ];
-        // Increment the counter
-        $itemsFound++;
-        // Remove the selected URL from $urlsArray
-        unset($urlsArray[$index]);
-    }
-
-    // Clear the Simple HTML DOM object to free up resources
-    $dom->clear();
-    unset($dom);
-}
+$crawlData = array_slice($dataArray, 0, 6);
 ?>
 
 <!DOCTYPE html>
@@ -322,6 +255,60 @@ while ($itemsFound < $maxItemsToFind && !empty($urlsArray)) {
             font-size: 1rem;
             vertical-align: baseline;
         }
+
+
+
+        /* Large screens (lg) */
+        @media only screen and (min-width: 1200px) {
+            div.product-item__container {
+                width: calc(100% / 6);
+                padding: 0.3125rem;
+                box-sizing: border-box;
+            }
+        }
+
+        /* Medium screens (md) */
+        @media only screen and (min-width: 992px) and (max-width: 1199px) {
+            div.product-item__container {
+                width: calc(100% / 6);
+                padding: 0.3125rem;
+                box-sizing: border-box;
+            }
+        }
+
+        /* Small screens (sm) */
+        @media only screen and (min-width: 768px) and (max-width: 991px) {
+            div.product-item__container {
+                width: calc(100% / 4);
+                padding: 0.3125rem;
+                box-sizing: border-box;
+            }
+
+            div.product-item__container:nth-child(-n+4) {
+                display: block;
+            }
+
+            div.product-item__container:not(:nth-child(-n+4)) {
+                display: none;
+            }
+        }
+
+        /* Extra-small screens (xs) */
+        @media only screen and (max-width: 767px) {
+            div.product-item__container {
+                width: calc(100% / 2);
+                padding: 0.3125rem;
+                box-sizing: border-box;
+            }
+
+            div.product-item__container:nth-child(-n+2) {
+                display: block;
+            }
+
+            div.product-item__container:not(:nth-child(-n+2)) {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -335,7 +322,7 @@ while ($itemsFound < $maxItemsToFind && !empty($urlsArray)) {
                             <div id="product-item__wrapper">
                                 <div class="product-item">
                                     <div class="product-info__container">
-                                        <a href="<?php echo htmlspecialchars($item['url']); ?>" class="product-link">
+                                        <a href="<?php echo htmlspecialchars($item['url']); ?>" class="product-link" target="_blank">
                                             <div class="product-info__wrapper">
                                                 <div class="product-info">
                                                     <div class="product-img__container">
