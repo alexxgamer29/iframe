@@ -9,6 +9,7 @@ $dataArray = json_decode($jsonData, true);
 if ($dataArray === null) {
     die("Error decoding JSON data");
 }
+shuffle($dataArray);
 $crawlData = array_slice($dataArray, 0, 6);
 ?>
 
