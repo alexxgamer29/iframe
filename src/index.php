@@ -26,13 +26,12 @@ $crawlData = array_slice($dataArray, 0, 6);
             font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
             color: rgba(0, 0, 0, .8);
             line-height: 1.2;
-            height: 100%;
             margin: 0;
         }
 
         body {
             background: rgb(255, 200, 100);
-            font-size: .875rem;
+            font-size: .5rem;
             text-size-adjust: none;
             -webkit-text-size-adjust: none;
         }
@@ -45,12 +44,12 @@ $crawlData = array_slice($dataArray, 0, 6);
 
         section.panels {
             width: 100%;
-            min-height: 3.75rem;
+            display: block;
+            /* min-height: 100vh; */
         }
 
         div.panels-product {
             display: flex;
-            min-height: calc(100vh - 11.25rem);
             flex-wrap: wrap;
             align-content: flex-start;
             padding-top: 0.3125rem;
@@ -218,7 +217,7 @@ $crawlData = array_slice($dataArray, 0, 6);
 
         .product-title>div {
             line-height: 1.25rem;
-            font-size: .875rem;
+            font-size: .8rem;
             overflow-wrap: break-word;
             max-height: 2.5rem;
             overflow: hidden;
@@ -253,13 +252,10 @@ $crawlData = array_slice($dataArray, 0, 6);
 
         span.price {
             line-height: 1.25rem;
-            font-size: 1rem;
+            font-size: 0.8rem;
             vertical-align: baseline;
         }
 
-
-
-        /* Large screens (lg) */
         @media only screen and (min-width: 1200px) {
             div.product-item__container {
                 width: calc(100% / 6);
@@ -268,7 +264,6 @@ $crawlData = array_slice($dataArray, 0, 6);
             }
         }
 
-        /* Medium screens (md) */
         @media only screen and (min-width: 992px) and (max-width: 1199px) {
             div.product-item__container {
                 width: calc(100% / 6);
@@ -277,8 +272,40 @@ $crawlData = array_slice($dataArray, 0, 6);
             }
         }
 
-        /* Small screens (sm) */
         @media only screen and (min-width: 768px) and (max-width: 991px) {
+            div.product-item__container {
+                width: calc(100% / 5);
+                padding: 0.3125rem;
+                box-sizing: border-box;
+            }
+
+            div.product-item__container:nth-child(-n+5) {
+                display: block;
+            }
+
+            div.product-item__container:not(:nth-child(-n+5)) {
+                display: none;
+            }
+
+            .product-title>div {
+                line-height: 1.25rem;
+                font-size: .75rem;
+                overflow-wrap: break-word;
+                max-height: 2.5rem;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+
+            span.price {
+                line-height: 1.25rem;
+                font-size: 0.8rem;
+                vertical-align: baseline;
+            }
+        }
+
+        @media only screen and (min-width: 576px) and (max-width: 767px) {
             div.product-item__container {
                 width: calc(100% / 4);
                 padding: 0.3125rem;
@@ -292,10 +319,26 @@ $crawlData = array_slice($dataArray, 0, 6);
             div.product-item__container:not(:nth-child(-n+4)) {
                 display: none;
             }
+
+            .product-title>div {
+                line-height: 1.25rem;
+                font-size: .75rem;
+                overflow-wrap: break-word;
+                max-height: 2.5rem;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+
+            span.price {
+                line-height: 1.25rem;
+                font-size: 0.8rem;
+                vertical-align: baseline;
+            }
         }
 
-        /* Extra-small screens (xs) */
-        @media only screen and (max-width: 767px) {
+        @media only screen and (max-width: 576px) {
             div.product-item__container {
                 width: calc(100% / 2);
                 padding: 0.3125rem;
@@ -308,6 +351,24 @@ $crawlData = array_slice($dataArray, 0, 6);
 
             div.product-item__container:not(:nth-child(-n+2)) {
                 display: none;
+            }
+
+
+            .product-title>div {
+                line-height: 1.25rem;
+                font-size: .75rem;
+                overflow-wrap: break-word;
+                max-height: 2.5rem;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+
+            span.price {
+                line-height: 1.25rem;
+                font-size: 0.8rem;
+                vertical-align: baseline;
             }
         }
     </style>
@@ -323,19 +384,19 @@ $crawlData = array_slice($dataArray, 0, 6);
                             <div id="product-item__wrapper">
                                 <div class="product-item">
                                     <div class="product-info__container">
-                                        <a href="<?php echo htmlspecialchars($item['url']); ?>" class="product-link" target="_blank">
+                                        <a href="<?php echo htmlspecialchars_decode($item['url']); ?>" class="product-link" target="_blank">
                                             <div class="product-info__wrapper">
                                                 <div class="product-info">
                                                     <div class="product-img__container">
                                                         <div class="product-img">
-                                                            <img src="<?php echo htmlspecialchars($item['img']); ?>" alt="">
+                                                            <img src="<?php echo htmlspecialchars_decode($item['img']); ?>" alt="">
                                                         </div>
                                                         <!-- Shopee frame -->
                                                         <!-- <div class="product-frame">
                                                             <img alt="" src="https://down-vn.img.susercontent.com/file/vn-50009109-12cec261f4c3657f7efb42286595e174">
                                                         </div> -->
                                                         <div class="product-discount">
-                                                            <span class="discount">-<?php echo htmlspecialchars($item['discount']); ?>%</span>
+                                                            <span class="discount">-<?php echo htmlspecialchars_decode($item['discount']); ?>%</span>
                                                         </div>
                                                         <!-- Shopee Mall logo -->
                                                         <!-- <div class="mall-logo__container">
@@ -346,13 +407,13 @@ $crawlData = array_slice($dataArray, 0, 6);
                                                     </div>
                                                     <div class="product-title__container">
                                                         <div class="product-title">
-                                                            <div><?php echo htmlspecialchars($item['title']); ?></div>
+                                                            <div><?php echo htmlspecialchars_decode($item['title']); ?></div>
                                                         </div>
                                                         <div class="product-price__container">
                                                             <div class="product-price__wrapper">
                                                                 <div class="product-price">
                                                                     <div>
-                                                                        <span class="price"><?php echo htmlspecialchars($item['price']); ?></span>
+                                                                        <span class="price"><?php echo htmlspecialchars_decode($item['price']); ?></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
