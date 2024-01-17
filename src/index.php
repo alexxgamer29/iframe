@@ -30,7 +30,6 @@ $crawlData = array_slice($dataArray, 0, 6);
         }
 
         body {
-            background: rgb(255, 200, 100);
             font-size: .5rem;
             text-size-adjust: none;
             -webkit-text-size-adjust: none;
@@ -396,7 +395,9 @@ $crawlData = array_slice($dataArray, 0, 6);
                                                             <img alt="" src="https://down-vn.img.susercontent.com/file/vn-50009109-12cec261f4c3657f7efb42286595e174">
                                                         </div> -->
                                                         <div class="product-discount">
-                                                            <span class="discount">-<?php echo htmlspecialchars_decode($item['discount']); ?>%</span>
+                                                            <span class="discount" style="<?php echo is_null($item['discount']) ? 'display: none;' : ''; ?>">
+                                                                <?php echo "-" . htmlspecialchars_decode($item['discount']) . "%" ?>
+                                                            </span>
                                                         </div>
                                                         <!-- Shopee Mall logo -->
                                                         <!-- <div class="mall-logo__container">
