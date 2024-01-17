@@ -7,73 +7,146 @@ function getBaseUrlFromShortenedUrl($url)
     $headers = get_headers($url, 1);
 
     if (isset($headers['Location'])) {
-        $finalUrl = is_array($headers['Location']) ? end($headers['Location']) : $headers['Location'];
+        $final_url = is_array($headers['Location']) ? end($headers['Location']) : $headers['Location'];
 
-        return parse_url($finalUrl, PHP_URL_HOST);
+        return parse_url($final_url, PHP_URL_HOST);
     }
 
     return parse_url($url, PHP_URL_HOST);
 }
 
-// Read URLs from the JSON file
-$urlsJson = file_get_contents('../urls.json');
-$urlsArray = json_decode($urlsJson, true);
+// Read URLs from the text file
+$url_arr = file('../urls.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 // Initialize variables for counting items with title, price, and discount
-$crawlData = [];
+$crawl_data = [];
+$failed_url = [];
 
-// Loop through all URLs in $urlsArray
-foreach ($urlsArray as $urlInfo) {
-    $url = $urlInfo['url'];
-
+// Loop through all URLs in $url_arr
+foreach ($url_arr as $url) {
+    echo $url . "\n";
     $base_url = getBaseUrlFromShortenedUrl($url);
+    echo $base_url . "\n";
 
-    // Get HTML content from the URL using file_get_contents
-    $html = file_get_contents($url);
+    if (strpos($base_url, 'shopee') !== false) {
+        try {
+            //  Get HTML content from the URL using file_get_contents
+            $html = file_get_contents($url);
 
-    // Create a Simple HTML DOM object
-    $dom = new simple_html_dom();
-    $dom->load($html);
+            // Create a Simple HTML DOM object
+            $dom = new simple_html_dom();
+            $dom->load($html);
 
-    // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
-    $title = $dom->find('._5uSO3a', 0);
-    $price = $dom->find('.TVzooJ.typo-m18', 0);
-    $img = $dom->find('meta[property=og:image"]', 0);
-    $discount = $dom->find('.badge__promotion', 0);
+            // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
+            $title = $dom->find('meta[property=og:title]', 0);
+            $price = $dom->find('.typo-m18', 0);
+            $img = $dom->find('meta[property=og:image]', 0);
+            $discount = $dom->find('.badge__promotion', 0);
 
-    // Check if title and price are present and discount is either a string or empty
-    if ($title && $price && !empty($title->innertext) && !empty($price->innertext) && ($discount || $discount === "")) {
-        // Check if discount is present
-        $discount_filter = '';
-        if ($discount) {
-            preg_match('/(\d+)%/', $discount->innertext, $matches);
+            // Check if title and price are present and discount is either a string or empty
+            if ($title && $price && !empty($title->content) && !empty($price->innertext)) {
+                // Check if discount is present
+                $discount_filter = '';
+                if ($discount) {
+                    preg_match('/(\d+)%/', $discount->innertext, $matches);
 
-            // Check if a match is found
-            if (!empty($matches)) {
-                $discount_filter = $matches[1];
+                    // Check if a match is found
+                    if (!empty($matches)) {
+                        $discount_filter = $matches[1];
+                    }
+                }
+
+                // Store crawl data in the array
+                $crawl_data[] = [
+                    'url' => $url,
+                    'base_url' => $base_url,
+                    'title' => str_replace(" | Shopee Việt Nam", "", $title->content),
+                    'price' => $price->innertext,
+                    'discount' => $discount_filter ? $discount_filter : null,
+                    'img' => $img->content,
+                ];
             }
-        }
 
-        // Store crawl data in the array
-        $crawlData[] = [
-            'url' => $url,
-            'base_url' => $base_url,
-            'title' => $title->innertext,
-            'price' => $price->innertext,
-            'discount' => $discount_filter,
-            'img' => $img->content,
-        ];
+            // Clear the Simple HTML DOM object to free up resources
+            $dom->clear();
+            unset($dom);
+        } catch (Exception $e) {
+            $failed_url[$url] = $e->getMessage();
+            echo 'Error: ',  $e->getMessage(), "\n";
+            continue;
+        }
     }
 
-    // Clear the Simple HTML DOM object to free up resources
-    $dom->clear();
-    unset($dom);
+    if (strpos($base_url, 'lazada') !== false) {
+        // Get HTML content from the URL using file_get_contents
+        try {
+            $html = file_get_contents($url);
+
+            // Create a Simple HTML DOM object
+            $dom = new simple_html_dom();
+            $dom->load($html);
+
+            $title = "";
+            $price = "";
+            $img = "";
+
+            $script = $dom->find('script[type=text/javascript]', 0);
+            if (preg_match('/var pdpTrackingData = "(.*)";/', $script, $matches)) {
+                $json_str = str_replace('\"', '"', $matches[1]);
+                $pdt_data = json_decode($json_str);
+                if ($pdt_data === null && json_last_error() !== JSON_ERROR_NONE) {
+                    echo "Error decoding JSON: " . json_last_error_msg() . "\n";
+                } else {
+                    $title = $pdt_data->pdt_name;
+                    $price = $pdt_data->pdt_price;
+                    $img = $pdt_data->pdt_photo;
+                }
+            }
+
+            if (empty($img)) {
+                $img = $dom->find('meta[property=og:image]', 0);
+                $img = $img->content;
+            }
+
+            if (substr($img, 0, 2) == '//') {
+                $img = 'https:' . $img;
+            }
+
+            if ($price) {
+                $price = str_replace(' ₫', '', $price);
+                $price = '₫ ' . $price;
+            }
+
+            if ($title && $price && $img) {
+
+                // Store crawl data in the array
+                $crawl_data[] = [
+                    'url' => $url,
+                    'base_url' => $base_url,
+                    'title' => $title,
+                    'price' => $price,
+                    'discount' => null,
+                    'img' => $img,
+                ];
+            }
+
+            // Clear the Simple HTML DOM object to free up resources
+            $dom->clear();
+            unset($dom);
+        } catch (Exception $e) {
+            $failed_url[$url] = $e->getMessage();
+            echo 'Error: ',  $e->getMessage(), "\n";
+            continue;
+        }
+    }
 }
 
 // Export the crawled data to a JSON file
-$outputJson = json_encode($crawlData, JSON_PRETTY_PRINT);
-file_put_contents('../data/data.json', $outputJson);
+$data = json_encode($crawl_data, JSON_PRETTY_PRINT);
+file_put_contents('../data/data.json', $data);
+
+$error_links = json_encode($failed_url, JSON_PRETTY_PRINT);
+file_put_contents('../data/error.json', $error_links);
 
 // Output success message
 echo "Data exported to output.json successfully.\n";
-?>
