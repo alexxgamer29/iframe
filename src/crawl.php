@@ -39,18 +39,31 @@ foreach ($url_arr as $url) {
 
             // Check landing page
             $landing_page_check = $dom->find('title[data-rh=true]', 0);
-            echo $landing_page_check . "\n";
+            // echo $landing_page_check . "\n";
             if ($landing_page_check) {
                 echo "\$Shopee Single.\n";
 
+                $scripts = $dom->find('script');
                 // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
                 $title = $dom->find('meta[property=og:title]', 0);
-                $price = $dom->find('.typo-m18', 0);
+                $price = null;
+                foreach ($scripts as $script) {
+                    if ($script->type === 'application/ld+json') {
+                        $json = json_decode($script->innertext, true);
+                        if (isset($json['@type']) && $json['@type'] === 'Product') {
+                            if (isset($json['offers']['price'])) {
+                                $price = '₫ ' . number_format($json['offers']['price'], 0, ',', '.');
+                            } elseif (isset($json['offers']['lowPrice'])) {
+                                $price = '₫ ' . number_format($json['offers']['lowPrice'], 0, ',', '.');
+                            }
+                        }
+                    }
+                }
                 $img = $dom->find('meta[property=og:image]', 0);
                 $discount = $dom->find('.badge__promotion', 0);
 
                 // Check if title and price are present and discount is either a string or empty
-                if ($title && $price && !empty($title->content) && !empty($price->innertext)) {
+                if ($title && $price && !empty($title->content)) {
                     // Check if discount is present
                     $discount_filter = '';
                     if ($discount) {
@@ -67,10 +80,12 @@ foreach ($url_arr as $url) {
                         'url' => $url,
                         'base_url' => $base_url,
                         'title' => str_replace(" | Shopee Việt Nam", "", $title->content),
-                        'price' => $price->innertext,
+                        'price' => $price,
                         'discount' => $discount_filter ? $discount_filter : null,
                         'img' => $img->content,
                     ];
+
+                    print_r($crawl_data);
                 }
 
                 // Clear the Simple HTML DOM object to free up resources
@@ -81,31 +96,34 @@ foreach ($url_arr as $url) {
                 $html = shell_exec("node chromium.js {$url}");
                 $dom = new simple_html_dom();
                 $dom->load($html);
+
+                $sold = $dom->find("#main > div > div:nth-child(3) > div > div > div > div.shop-page > div > div.shop-page__info > div > div.section-seller-overview-horizontal__seller-info-list > div:nth-child(2) > div.section-seller-overview__item-text > div.section-seller-overview__item-text-value", 0);
+                $price = $dom->find("#main > div > div:nth-child(3) > div > div > div > div.shop-page > div > div.shop-page__info > div > div.section-seller-overview-horizontal__seller-info-list > div:nth-child(1) > div.section-seller-overview__item-text > div.section-seller-overview__item-text-value", 1);
+                $location = $dom->find("div[aria-label=from]", 0);
                 $scripts = $dom->find('script');
 
                 foreach ($scripts as $script) {
                     if ($script->type === 'application/ld+json') {
                         $json = json_decode($script->innertext, true);
-                        if (isset($json['@type']) && $json['@type'] === 'Product') {
-                            $price = null;
-                            if (isset($json['offers']['price'])) {
-                                $price = '₫ ' . number_format($json['offers']['price'], 0, ',', '.');
-                            } elseif (isset($json['offers']['lowPrice'])) {
-                                $price = '₫ ' . number_format($json['offers']['lowPrice'], 0, ',', '.');
-                            }
+                        if (isset($json['@type']) && $json['@type'] === 'Organization') {
 
                             // Store crawl data in the array
                             $crawl_data[] = [
                                 'url' => $url,
                                 'base_url' => $base_url,
                                 'title' => $json['name'],
-                                'price' => $price,
+                                'landing' => true,
+                                'price' => $price->innertext,
                                 'discount' => null,
+                                'sold' => $sold->innertext,
+                                'location' => $location->innertext,
                                 'img' => $json['image'],
                             ];
                         }
                     }
                 }
+
+
                 // Clear the Simple HTML DOM object to free up resources
                 $dom->clear();
                 unset($dom);

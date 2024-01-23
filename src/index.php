@@ -255,6 +255,43 @@ $crawlData = array_slice($dataArray, 0, 6);
             vertical-align: baseline;
         }
 
+        .location__container {
+            display: flex;
+            margin-top: 0.5rem;
+            flex-direction: row;
+            align-items: center;
+            color: rgba(0, 0, 0, .87);
+        }
+
+        .location__wrapper {
+            color: rgba(0, 0, 0, .65);
+            line-height: 1.125rem;
+            min-height: 1em;
+            text-align: left;
+            font-weight: 200;
+            flex: 0 1 auto;
+            font-size: .75rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sold-product__container {
+            display: flex;
+            align-items: center;
+            height: 1.25rem;
+            margin-top: 0.75rem;
+        }
+
+        .sold-product {
+            color: rgba(0, 0, 0, .87);
+            font-size: .75rem;
+            line-height: .875rem;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
         @media only screen and (min-width: 1200px) {
             div.product-item__container {
                 width: calc(100% / 6);
@@ -394,11 +431,13 @@ $crawlData = array_slice($dataArray, 0, 6);
                                                         <!-- <div class="product-frame">
                                                             <img alt="" src="https://down-vn.img.susercontent.com/file/vn-50009109-12cec261f4c3657f7efb42286595e174">
                                                         </div> -->
-                                                        <div class="product-discount">
-                                                            <span class="discount" style="<?php echo is_null($item['discount']) ? 'display: none;' : ''; ?>">
-                                                                <?php echo "-" . htmlspecialchars_decode($item['discount']) . "%" ?>
-                                                            </span>
-                                                        </div>
+                                                        <?php if (isset($item['discount']) && !is_null($item['discount'])) : ?>
+                                                            <div class="product-discount">
+                                                                <span class="discount">
+                                                                    <?php echo "-" . htmlspecialchars_decode($item['discount']) . "%" ?>
+                                                                </span>
+                                                            </div>
+                                                        <?php endif; ?>
                                                         <!-- Shopee Mall logo -->
                                                         <!-- <div class="mall-logo__container">
                                                             <span class="mall-logo__wrapper">
@@ -414,11 +453,35 @@ $crawlData = array_slice($dataArray, 0, 6);
                                                             <div class="product-price__wrapper">
                                                                 <div class="product-price">
                                                                     <div>
-                                                                        <span class="price"><?php echo htmlspecialchars_decode($item['price']); ?></span>
+                                                                        <span class="price">
+                                                                            <?php
+                                                                            if (isset($item['landing']) && !is_null($item['landing'])) {
+                                                                                echo "Sản phẩm " . htmlspecialchars_decode($item['price']);
+                                                                            } else {
+                                                                                echo htmlspecialchars_decode($item['price']);
+                                                                            }
+                                                                            ?>
+                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        <?php if (isset($item['sold']) && !is_null($item['sold'])) : ?>
+                                                            <div class="sold-product__container">
+                                                                <div class="sold-product">
+                                                                    Người theo dõi <?php echo htmlspecialchars_decode($item['sold']); ?>
+                                                                </div>
+                                                            </div>
+                                                        <?php endif; ?>
+
+
+                                                        <?php if (isset($item['location']) && !is_null($item['location'])) : ?>
+                                                            <div class="location__container">
+                                                                <div class="location__wrapper">
+                                                                    <?php echo htmlspecialchars_decode($item['location']); ?>
+                                                                </div>
+                                                            </div>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>
