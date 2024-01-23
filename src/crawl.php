@@ -37,39 +37,79 @@ foreach ($url_arr as $url) {
             $dom = new simple_html_dom();
             $dom->load($html);
 
-            // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
-            $title = $dom->find('meta[property=og:title]', 0);
-            $price = $dom->find('.typo-m18', 0);
-            $img = $dom->find('meta[property=og:image]', 0);
-            $discount = $dom->find('.badge__promotion', 0);
+            // Check landing page
+            $landing_page_check = $dom->find('title[data-rh=true]', 0);
+            echo $landing_page_check . "\n";
+            if ($landing_page_check) {
+                echo "\$Shopee Single.\n";
 
-            // Check if title and price are present and discount is either a string or empty
-            if ($title && $price && !empty($title->content) && !empty($price->innertext)) {
-                // Check if discount is present
-                $discount_filter = '';
-                if ($discount) {
-                    preg_match('/(\d+)%/', $discount->innertext, $matches);
+                // Find and print the content of specific HTML elements (e.g., <title>, <span>, <div>)
+                $title = $dom->find('meta[property=og:title]', 0);
+                $price = $dom->find('.typo-m18', 0);
+                $img = $dom->find('meta[property=og:image]', 0);
+                $discount = $dom->find('.badge__promotion', 0);
 
-                    // Check if a match is found
-                    if (!empty($matches)) {
-                        $discount_filter = $matches[1];
+                // Check if title and price are present and discount is either a string or empty
+                if ($title && $price && !empty($title->content) && !empty($price->innertext)) {
+                    // Check if discount is present
+                    $discount_filter = '';
+                    if ($discount) {
+                        preg_match('/(\d+)%/', $discount->innertext, $matches);
+
+                        // Check if a match is found
+                        if (!empty($matches)) {
+                            $discount_filter = $matches[1];
+                        }
                     }
+
+                    // Store crawl data in the array
+                    $crawl_data[] = [
+                        'url' => $url,
+                        'base_url' => $base_url,
+                        'title' => str_replace(" | Shopee Việt Nam", "", $title->content),
+                        'price' => $price->innertext,
+                        'discount' => $discount_filter ? $discount_filter : null,
+                        'img' => $img->content,
+                    ];
                 }
 
-                // Store crawl data in the array
-                $crawl_data[] = [
-                    'url' => $url,
-                    'base_url' => $base_url,
-                    'title' => str_replace(" | Shopee Việt Nam", "", $title->content),
-                    'price' => $price->innertext,
-                    'discount' => $discount_filter ? $discount_filter : null,
-                    'img' => $img->content,
-                ];
-            }
+                // Clear the Simple HTML DOM object to free up resources
+                $dom->clear();
+                unset($dom);
+            } else {
+                echo "\$Shopee Landing page.\n";
+                $html = shell_exec("node chromium.js {$url}");
+                $dom = new simple_html_dom();
+                $dom->load($html);
+                $scripts = $dom->find('script');
 
-            // Clear the Simple HTML DOM object to free up resources
-            $dom->clear();
-            unset($dom);
+                foreach ($scripts as $script) {
+                    if ($script->type === 'application/ld+json') {
+                        $json = json_decode($script->innertext, true);
+                        if (isset($json['@type']) && $json['@type'] === 'Product') {
+                            $price = null;
+                            if (isset($json['offers']['price'])) {
+                                $price = '₫ ' . number_format($json['offers']['price'], 0, ',', '.');
+                            } elseif (isset($json['offers']['lowPrice'])) {
+                                $price = '₫ ' . number_format($json['offers']['lowPrice'], 0, ',', '.');
+                            }
+
+                            // Store crawl data in the array
+                            $crawl_data[] = [
+                                'url' => $url,
+                                'base_url' => $base_url,
+                                'title' => $json['name'],
+                                'price' => $price,
+                                'discount' => null,
+                                'img' => $json['image'],
+                            ];
+                        }
+                    }
+                }
+                // Clear the Simple HTML DOM object to free up resources
+                $dom->clear();
+                unset($dom);
+            }
         } catch (Exception $e) {
             $failed_url[$url] = $e->getMessage();
             echo 'Error: ',  $e->getMessage(), "\n";
@@ -100,13 +140,16 @@ foreach ($url_arr as $url) {
                     $title = $pdt_data->pdt_name;
                     $price = $pdt_data->pdt_price;
                     $img = $pdt_data->pdt_photo;
+                    echo $img . "\n";
                 }
             }
 
-            if (empty($img)) {
-                $img = $dom->find('meta[property=og:image]', 0);
-                $img = $img->content;
-            }
+            // if (empty($img) || is_null($img)) {
+            //     $img = $dom->find('meta[property=og:image]', 0);
+            //     if ($img) {
+            //         $img = $img->content;
+            //     }
+            // }
 
             if (substr($img, 0, 2) == '//') {
                 $img = 'https:' . $img;
@@ -133,6 +176,8 @@ foreach ($url_arr as $url) {
             // Clear the Simple HTML DOM object to free up resources
             $dom->clear();
             unset($dom);
+
+            sleep(2);
         } catch (Exception $e) {
             $failed_url[$url] = $e->getMessage();
             echo 'Error: ',  $e->getMessage(), "\n";
