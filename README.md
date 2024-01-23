@@ -5,5 +5,5 @@
 EMAIL=
 PASSWORD=
 ````
-Note: sau khi tự động đăng nhập, vui lòng xác nhận email nếu Shopee yêu cầu
+* Note: sau khi tự động đăng nhập, vui lòng xác nhận email nếu Shopee yêu cầu
 3. php crawl.php
