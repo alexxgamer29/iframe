@@ -14,7 +14,7 @@ $crawlData = array_slice($dataArray, 0, 6);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="overflow: hidden;">
 
 <head>
     <meta charset="UTF-8">
@@ -211,7 +211,7 @@ $crawlData = array_slice($dataArray, 0, 6);
 
         .product-title {
             margin-bottom: 0.25rem;
-            min-height: 40px;
+            /*min-height: 40px;*/
         }
 
         .product-title>div {
@@ -257,7 +257,7 @@ $crawlData = array_slice($dataArray, 0, 6);
 
         .location__container {
             display: flex;
-            margin-top: 0.5rem;
+            /*margin-top: 0.5rem;*/
             flex-direction: row;
             align-items: center;
             color: rgba(0, 0, 0, .87);
@@ -280,7 +280,7 @@ $crawlData = array_slice($dataArray, 0, 6);
             display: flex;
             align-items: center;
             height: 1.25rem;
-            margin-top: 0.75rem;
+            /*margin-top: 0.75rem;*/
         }
 
         .sold-product {
