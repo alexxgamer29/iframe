@@ -413,26 +413,25 @@
                     displayData(JSON.parse(cachedData));
                     return; // Exit early
                 }
-            } else {
-                // Fetch data via AJAX
-                $.ajax({
-                    url: 'load.php',
-                    type: 'GET',
-                    cache: true,
-                    dataType: 'json',
-                    success: function(data) {
-                        // Cache the data to localStorage
-                        console.log(typeof data)
-                        localStorage.setItem('iframe-data', JSON.stringify(data));
-                        localStorage.setItem('cached-timestamp', new Date().getTime().toString());
-                        // Display the fetched data
-                        displayData(data);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching data:', error);
-                    }
-                });
             }
+            // Fetch data via AJAX
+            $.ajax({
+                url: 'load.php',
+                type: 'GET',
+                cache: true,
+                dataType: 'json',
+                success: function(data) {
+                    // Cache the data to localStorage
+                    console.log(typeof data)
+                    localStorage.setItem('iframe-data', JSON.stringify(data));
+                    localStorage.setItem('cached-timestamp', new Date().getTime().toString());
+                    // Display the fetched data
+                    displayData(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data:', error);
+                }
+            });
 
             function displayData(data) {
                 // Shuffle the data array
