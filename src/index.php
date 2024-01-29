@@ -1,18 +1,3 @@
-<?php
-// Set the path to your JSON file
-$jsonFilePath = '../data/data.json';
-// Read JSON file
-$jsonData = file_get_contents($jsonFilePath);
-// Decode JSON data to array
-$dataArray = json_decode($jsonData, true);
-// Check if decoding was successful
-if ($dataArray === null) {
-    die("Error decoding JSON data");
-}
-shuffle($dataArray);
-$crawlData = array_slice($dataArray, 0, 6);
-?>
-
 <!DOCTYPE html>
 <html lang="en" style="overflow: hidden;">
 
@@ -20,6 +5,7 @@ $crawlData = array_slice($dataArray, 0, 6);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iframe</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body,
         html {
@@ -408,6 +394,128 @@ $crawlData = array_slice($dataArray, 0, 6);
             }
         }
     </style>
+    <script>
+        $(document).ready(function() {
+            var CACHE_EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+            // Check if cached data exists and if it's expired
+            var cachedData = localStorage.getItem('iframe-data');
+            var cachedTimestamp = localStorage.getItem('cached-timestamp');
+
+
+            // Check if data is already in localStorage
+            var cachedData = localStorage.getItem('iframe-data');
+
+            if (cachedData && cachedTimestamp) {
+                var currentTime = new Date().getTime();
+                if (currentTime - parseInt(cachedTimestamp) < CACHE_EXPIRATION_TIME) {
+                    // If data is not expired, use the cached data
+                    displayData(JSON.parse(cachedData));
+                    return; // Exit early
+                }
+            } else {
+                // Fetch data via AJAX
+                $.ajax({
+                    url: 'load.php',
+                    type: 'GET',
+                    cache: true,
+                    dataType: 'json',
+                    success: function(data) {
+                        // Cache the data to localStorage
+                        console.log(typeof data)
+                        localStorage.setItem('iframe-data', JSON.stringify(data));
+                        localStorage.setItem('cached-timestamp', new Date().getTime().toString());
+                        // Display the fetched data
+                        displayData(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    }
+                });
+            }
+
+            function displayData(data) {
+                // Shuffle the data array
+
+                shuffleArray(data);
+
+                // Select the first 6 items
+                var selectedData = data.slice(0, 6);
+
+                // Display data in the HTML
+                selectedData.forEach(function(item, index) {
+                    var productItem = `
+                        <div class="product-item__container">
+                            <div id="product-item__wrapper">
+                                <div class="product-item">
+                                    <div class="product-info__container">
+                                        <a href="${item.url}" class="product-link" target="_blank">
+                                            <div class="product-info__wrapper">
+                                                <div class="product-info">
+                                                    <div class="product-img__container">
+                                                        <div class="product-img">
+                                                            <img src="${item.img}" alt="">
+                                                        </div>
+                                                        ${item.discount ? 
+                                                            `<div class="product-discount">
+                                                                <span class="discount">
+                                                                    -${item.discount}%
+                                                                </span>
+                                                            </div>` : ''}
+                                                    </div>
+                                                    <div class="product-title__container">
+                                                        <div class="product-title">
+                                                            <div>${item.title}</div>
+                                                        </div>
+                                                        <div class="product-price__container">
+                                                            <div class="product-price__wrapper">
+                                                                <div class="product-price">
+                                                                    <div>
+                                                                        <span class="price">
+                                                                            ${item.landing ? 'Sản phẩm ' : ''}${item.price}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        ${item.sold ? 
+                                                            `<div class="sold-product__container">
+                                                                <div class="sold-product">
+                                                                    Người theo dõi ${item.sold}
+                                                                </div>
+                                                            </div>` : ''}
+                                                        ${item.location ? 
+                                                            `<div class="location__container">
+                                                                <div class="location__wrapper">
+                                                                    ${item.location}
+                                                                </div>
+                                                            </div>` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    // Append product item to the product container
+                    $('.panels-product').append(productItem);
+                });
+            }
+
+            // Function to shuffle array
+            function shuffleArray(array) {
+                for (var i = array.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var temp = array[i];
+                    array[i] = array[j];
+                    array[j] = temp;
+                }
+            }
+        });
+    </script>
+</head>
 </head>
 
 <body>
